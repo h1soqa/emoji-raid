@@ -24,3 +24,76 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+@keyframes damage-pop {
+  0% {
+    opacity: 0;
+    transform: translateY(8px) scale(0.9);
+  }
+
+  20% {
+    opacity: 1;
+    transform: translateY(0) scale(1.08);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateY(-28px) scale(1);
+  }
+}
+
+.animate-damage-pop {
+  animation: damage-pop 1.4s ease-out forwards;
+}
+
+@keyframes boss-shake {
+  0% {
+    transform: translateX(0) rotate(0deg) scale(1);
+  }
+
+  15% {
+    transform: translateX(-8px) rotate(-4deg) scale(1.08);
+  }
+
+  30% {
+    transform: translateX(8px) rotate(4deg) scale(1.08);
+  }
+
+  45% {
+    transform: translateX(-6px) rotate(-3deg) scale(1.05);
+  }
+
+  60% {
+    transform: translateX(6px) rotate(3deg) scale(1.05);
+  }
+
+  75% {
+    transform: translateX(-3px) rotate(-1deg) scale(1.02);
+  }
+
+  100% {
+    transform: translateX(0) rotate(0deg) scale(1);
+  }
+}
+
+@keyframes boss-flash {
+  0% {
+    background-color: rgb(127 29 29 / 0.45);
+  }
+
+  35% {
+    background-color: rgb(239 68 68 / 0.22);
+  }
+
+  100% {
+    background-color: rgb(9 9 11 / 0.4);
+  }
+}
+
+.animate-boss-shake {
+  animation: boss-shake 0.5s ease-in-out;
+}
+
+.animate-boss-flash {
+  animation: boss-flash 0.5s ease-out;
+}
