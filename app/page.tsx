@@ -192,10 +192,10 @@ export default function Home() {
                 isBossHit ? "animate-boss-shake" : "",
               ].join(" ")}
             >
-              {boss.emoji}
+              <img src="/straj_dreva.webp" width="250px"/>
             </div>
 
-            <h2 className="text-2xl font-bold">{boss.name}</h2>
+            <h2 className="text-2xl font-bold">Страж древа</h2>
 
             <p className="text-zinc-400 mb-4">
               HP: {boss.currentHp} / {boss.maxHp}
