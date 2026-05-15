@@ -9,8 +9,11 @@ export async function POST(request: NextRequest) {
   const username = String(body.username ?? "").trim().toLowerCase();
   const password = String(body.password ?? "");
 
-  const user = await prisma.user.findUnique({
-    where: { username },
+  const user = await prisma.user.findFirst({
+    where: {
+      username,
+      isGuest: false,
+    },
   });
 
   if (!user) {
@@ -38,6 +41,7 @@ export async function POST(request: NextRequest) {
     user: {
       id: user.id,
       username: user.username,
+      isGuest: user.isGuest,
     },
   });
 

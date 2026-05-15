@@ -35,7 +35,8 @@ type TodayStatus = {
 
 type User = {
   id: string;
-  username: string;
+  username: string | null;
+  isGuest: boolean;
 };
 
 const reelSymbols = ["🍒", "🔥", "💀", "⭐", "🍀", "🧊", "❤️"];
@@ -79,6 +80,23 @@ export default function Home() {
 
     if (data.spin) {
       setDisplayedSymbols(data.spin.symbols.split(","));
+    }
+  }
+
+  async function ensureGuestSession() {
+    const response = await fetch("/api/auth/guest", {
+      method: "POST",
+    });
+
+    if (response.status === 401) {
+      setUser(null);
+      return;
+    }
+
+    const data = await response.json();
+
+    if (response.ok) {
+      setUser(data.user);
     }
   }
 
@@ -199,7 +217,12 @@ export default function Home() {
   }
 
   useEffect(() => {
-    loadTodayStatus();
+    async function init() {
+      await ensureGuestSession();
+      await loadTodayStatus();
+    }
+
+    init();
   }, []);
 
   const hpPercent = boss
@@ -218,22 +241,34 @@ export default function Home() {
         {user ? (
           <div className="mb-8 flex items-center justify-between rounded-2xl border border-zinc-800 bg-zinc-950/50 p-4">
             <div>
-              <p className="text-sm text-zinc-400">Logged in as</p>
-              <p className="font-bold">@{user.username}</p>
+              <p className="text-sm text-zinc-400">
+                {user.isGuest ? "Playing as guest" : "Logged in as"}
+              </p>
+              <p className="font-bold">
+                {user.isGuest ? "Guest player" : `@${user.username}`}
+              </p>
             </div>
 
-            <button
-              onClick={handleLogout}
-              className="rounded-xl bg-zinc-800 px-4 py-2 text-sm font-bold hover:bg-zinc-700"
-            >
-              Logout
-            </button>
+            {!user.isGuest && (
+              <button
+                onClick={handleLogout}
+                className="rounded-xl bg-zinc-800 px-4 py-2 text-sm font-bold hover:bg-zinc-700"
+              >
+                Logout
+              </button>
+            )}
           </div>
-        ) : (
+        ) : null}
+
+        {(!user || user.isGuest) && (
           <form
             onSubmit={handleAuthSubmit}
             className="mb-8 rounded-2xl border border-zinc-800 bg-zinc-950/50 p-4"
           >
+            <p className="mb-4 text-sm text-zinc-400">
+              Create an account to save your progress across devices.
+            </p>
+
             <div className="mb-4 flex gap-2">
               <button
                 type="button"

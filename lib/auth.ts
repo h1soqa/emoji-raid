@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 
 const SESSION_COOKIE_NAME = "emoji_raid_session";
+const LOGGED_OUT_COOKIE_NAME = "emoji_raid_logged_out";
 
 function getAuthSecret() {
   const secret = process.env.AUTH_SECRET;
@@ -43,6 +44,7 @@ export async function getCurrentUser() {
       select: {
         id: true,
         username: true,
+        isGuest: true,
         createdAt: true,
       },
     });
@@ -51,6 +53,24 @@ export async function getCurrentUser() {
   }
 }
 
+export async function createGuestUser() {
+  return prisma.user.create({
+    data: {
+      isGuest: true,
+    },
+    select: {
+      id: true,
+      username: true,
+      isGuest: true,
+      createdAt: true,
+    },
+  });
+}
+
 export function getSessionCookieName() {
   return SESSION_COOKIE_NAME;
+}
+
+export function getLoggedOutCookieName() {
+  return LOGGED_OUT_COOKIE_NAME;
 }

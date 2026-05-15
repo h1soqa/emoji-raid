@@ -1,7 +1,12 @@
 import bcrypt from "bcryptjs";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { createSessionToken, getSessionCookieName } from "@/lib/auth";
+import {
+  createSessionToken,
+  getCurrentUser,
+  getSessionCookieName,
+  getLoggedOutCookieName,
+} from "@/lib/auth";
 
 function isValidUsername(username: string) {
   return /^[a-zA-Z0-9_]{3,20}$/.test(username);
@@ -34,11 +39,11 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const existingUser = await prisma.user.findUnique({
+  const existingUsername = await prisma.user.findUnique({
     where: { username },
   });
 
-  if (existingUser) {
+  if (existingUsername) {
     return NextResponse.json(
       { error: "Username is already taken" },
       { status: 409 }
@@ -46,17 +51,35 @@ export async function POST(request: NextRequest) {
   }
 
   const passwordHash = await bcrypt.hash(password, 12);
+  const currentUser = await getCurrentUser();
 
-  const user = await prisma.user.create({
-    data: {
-      username,
-      passwordHash,
-    },
-    select: {
-      id: true,
-      username: true,
-    },
-  });
+  const user =
+    currentUser && currentUser.isGuest
+      ? await prisma.user.update({
+          where: { id: currentUser.id },
+          data: {
+            username,
+            passwordHash,
+            isGuest: false,
+          },
+          select: {
+            id: true,
+            username: true,
+            isGuest: true,
+          },
+        })
+      : await prisma.user.create({
+          data: {
+            username,
+            passwordHash,
+            isGuest: false,
+          },
+          select: {
+            id: true,
+            username: true,
+            isGuest: true,
+          },
+        });
 
   const token = await createSessionToken(user.id);
 
@@ -71,6 +94,8 @@ export async function POST(request: NextRequest) {
     path: "/",
     maxAge: 60 * 60 * 24 * 30,
   });
+
+  response.cookies.delete(getLoggedOutCookieName());
 
   return response;
 }

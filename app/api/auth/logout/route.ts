@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
-import { getSessionCookieName } from "@/lib/auth";
+import {
+  getLoggedOutCookieName,
+  getSessionCookieName,
+} from "@/lib/auth";
 
 export async function POST() {
   const response = NextResponse.json({
@@ -7,6 +10,14 @@ export async function POST() {
   });
 
   response.cookies.delete(getSessionCookieName());
+
+  response.cookies.set(getLoggedOutCookieName(), "true", {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: 60 * 60 * 24 * 30,
+  });
 
   return response;
 }
