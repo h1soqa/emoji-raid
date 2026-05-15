@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
     },
   });
 
-  if (!user) {
+  if (!user || !user.passwordHash) {
     return NextResponse.json(
       { error: "Invalid username or password" },
       { status: 401 }
