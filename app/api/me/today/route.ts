@@ -1,31 +1,34 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getOrCreateTodayBoss, getTodayKey } from "@/lib/boss";
+import { getCurrentUser } from "@/lib/auth";
 
-export async function GET(request: NextRequest) {
-  const searchParams = request.nextUrl.searchParams;
-  const userId = searchParams.get("userId");
+export async function GET() {
+  const user = await getCurrentUser();
+  const boss = await getOrCreateTodayBoss();
 
-  if (!userId) {
-    return NextResponse.json(
-      { error: "userId is required" },
-      { status: 400 }
-    );
+  if (!user) {
+    return NextResponse.json({
+      user: null,
+      canSpin: false,
+      spin: null,
+      boss,
+    });
   }
 
   const date = getTodayKey();
-  const boss = await getOrCreateTodayBoss();
 
   const spin = await prisma.spin.findUnique({
     where: {
       userId_date: {
-        userId,
+        userId: user.id,
         date,
       },
     },
   });
 
   return NextResponse.json({
+    user,
     canSpin: !spin,
     spin,
     boss,

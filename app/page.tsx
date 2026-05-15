@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
 type Boss = {
   id: string;
@@ -33,6 +33,11 @@ type TodayStatus = {
   boss: Boss;
 };
 
+type User = {
+  id: string;
+  username: string;
+};
+
 const reelSymbols = ["🍒", "🔥", "💀", "⭐", "🍀", "🧊", "❤️"];
 
 function getRandomSymbols() {
@@ -57,27 +62,17 @@ export default function Home() {
   const [damagePopup, setDamagePopup] = useState<number | null>(null);
   const [isBossHit, setIsBossHit] = useState(false);
 
-  const userId = useMemo(() => {
-    if (typeof window === "undefined") return "";
-
-    const existingUserId = localStorage.getItem("emoji-raid-user-id");
-
-    if (existingUserId) {
-      return existingUserId;
-    }
-
-    const newUserId = crypto.randomUUID();
-    localStorage.setItem("emoji-raid-user-id", newUserId);
-
-    return newUserId;
-  }, []);
+  const [user, setUser] = useState<User | null>(null);
+  const [authMode, setAuthMode] = useState<"login" | "register">("login");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [authError, setAuthError] = useState<string | null>(null);
 
   async function loadTodayStatus() {
-    if (!userId) return;
+    const response = await fetch("/api/me/today");
+    const data: TodayStatus & { user: User | null } = await response.json();
 
-    const response = await fetch(`/api/me/today?userId=${userId}`);
-    const data: TodayStatus = await response.json();
-
+    setUser(data.user);
     setBoss(data.boss);
     setCanSpin(data.canSpin);
     setTodaySpin(data.spin);
@@ -88,10 +83,15 @@ export default function Home() {
   }
 
   async function handleSpin() {
+    if (!user) {
+      setError("Login first");
+      return;
+    }
+
     setError(null);
     setResult(null);
 
-    const statusResponse = await fetch(`/api/me/today?userId=${userId}`);
+    const statusResponse = await fetch("/api/me/today");
     const statusData: TodayStatus = await statusResponse.json();
 
     setBoss(statusData.boss);
@@ -116,10 +116,6 @@ export default function Home() {
     try {
       const response = await fetch("/api/spin", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ userId }),
       });
 
       const data = await response.json();
@@ -159,9 +155,52 @@ export default function Home() {
     }
   }
 
+  async function handleAuthSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    setAuthError(null);
+
+    const response = await fetch(`/api/auth/${authMode}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        username,
+        password,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      setAuthError(data.error ?? "Auth failed");
+      return;
+    }
+
+    setUser(data.user);
+    setUsername("");
+    setPassword("");
+    await loadTodayStatus();
+  }
+
+  async function handleLogout() {
+    await fetch("/api/auth/logout", {
+      method: "POST",
+    });
+
+    setUser(null);
+    setCanSpin(false);
+    setTodaySpin(null);
+    setResult(null);
+    setDisplayedSymbols(["❔", "❔", "❔"]);
+
+    await loadTodayStatus();
+  }
+
   useEffect(() => {
     loadTodayStatus();
-  }, [userId]);
+  }, []);
 
   const hpPercent = boss
     ? Math.max(0, Math.round((boss.currentHp / boss.maxHp) * 100))
@@ -175,6 +214,83 @@ export default function Home() {
         <p className="text-zinc-400 mb-8">
           Один spin в день. Весь урон игроков идет в общего босса.
         </p>
+
+        {user ? (
+          <div className="mb-8 flex items-center justify-between rounded-2xl border border-zinc-800 bg-zinc-950/50 p-4">
+            <div>
+              <p className="text-sm text-zinc-400">Logged in as</p>
+              <p className="font-bold">@{user.username}</p>
+            </div>
+
+            <button
+              onClick={handleLogout}
+              className="rounded-xl bg-zinc-800 px-4 py-2 text-sm font-bold hover:bg-zinc-700"
+            >
+              Logout
+            </button>
+          </div>
+        ) : (
+          <form
+            onSubmit={handleAuthSubmit}
+            className="mb-8 rounded-2xl border border-zinc-800 bg-zinc-950/50 p-4"
+          >
+            <div className="mb-4 flex gap-2">
+              <button
+                type="button"
+                onClick={() => setAuthMode("login")}
+                className={[
+                  "flex-1 rounded-xl px-4 py-2 font-bold",
+                  authMode === "login"
+                    ? "bg-white text-zinc-950"
+                    : "bg-zinc-800 text-white",
+                ].join(" ")}
+              >
+                Login
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setAuthMode("register")}
+                className={[
+                  "flex-1 rounded-xl px-4 py-2 font-bold",
+                  authMode === "register"
+                    ? "bg-white text-zinc-950"
+                    : "bg-zinc-800 text-white",
+                ].join(" ")}
+              >
+                Register
+              </button>
+            </div>
+
+            <input
+              value={username}
+              onChange={(event) => setUsername(event.target.value)}
+              placeholder="username"
+              className="mb-3 w-full rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-3 outline-none focus:border-zinc-400"
+            />
+
+            <input
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              placeholder="password"
+              type="password"
+              className="mb-3 w-full rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-3 outline-none focus:border-zinc-400"
+            />
+
+            {authError && (
+              <p className="mb-3 rounded-xl bg-red-500/10 p-3 text-sm text-red-300">
+                {authError}
+              </p>
+            )}
+
+            <button
+              type="submit"
+              className="w-full rounded-xl bg-white py-3 font-bold text-zinc-950"
+            >
+              {authMode === "login" ? "Login" : "Create account"}
+            </button>
+          </form>
+        )}
 
         {boss ? (
           <section
@@ -238,10 +354,16 @@ export default function Home() {
 
         <button
           onClick={handleSpin}
-          disabled={isSpinning || !boss || !canSpin}
+          disabled={isSpinning || !boss || !canSpin || !user}
           className="w-full rounded-2xl bg-white text-zinc-950 font-bold py-4 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] transition"
         >
-          {isSpinning ? "Spinning..." : canSpin ? "Spin" : "Already played today"}
+          {isSpinning
+            ? "Spinning..."
+            : !user
+              ? "Login to spin"
+              : canSpin
+                ? "Spin"
+                : "Already played today"}
         </button>
 
         {todaySpin && !result && (

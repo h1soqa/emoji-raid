@@ -2,27 +2,19 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getOrCreateTodayBoss, getTodayKey } from "@/lib/boss";
 import { calculateDamage, spinSlot } from "@/lib/slot";
+import { getCurrentUser } from "@/lib/auth";
 
-export async function POST(request: NextRequest) {
-  const body = await request.json();
+export async function POST() {
+  const user = await getCurrentUser();
 
-  const userId = body.userId;
-
-  if (!userId || typeof userId !== "string") {
+  if (!user) {
     return NextResponse.json(
-      { error: "userId is required" },
-      { status: 400 }
+      { error: "Unauthorized" },
+      { status: 401 }
     );
   }
 
   const date = getTodayKey();
-
-  const user = await prisma.user.upsert({
-    where: { id: userId },
-    update: {},
-    create: { id: userId },
-  });
-
   const boss = await getOrCreateTodayBoss();
 
   const existingSpin = await prisma.spin.findUnique({
