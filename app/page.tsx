@@ -314,7 +314,7 @@ export default function Home() {
                   alt={boss.name}
                   width={250}
                   height={250}
-                  className="h-full w-full object-cover"
+                  className="object-cover"
                 />
             </div>
 
