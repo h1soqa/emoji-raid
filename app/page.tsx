@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { AuthModal } from "@/components/AuthModal";
 
 type Boss = {
   id: string;
@@ -64,10 +65,8 @@ export default function Home() {
   const [isBossHit, setIsBossHit] = useState(false);
 
   const [user, setUser] = useState<User | null>(null);
-  const [authMode, setAuthMode] = useState<"login" | "register">("login");
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [authError, setAuthError] = useState<string | null>(null);
+
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   async function loadTodayStatus() {
     const response = await fetch("/api/me/today");
@@ -173,32 +172,8 @@ export default function Home() {
     }
   }
 
-  async function handleAuthSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-
-    setAuthError(null);
-
-    const response = await fetch(`/api/auth/${authMode}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        username,
-        password,
-      }),
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      setAuthError(data.error ?? "Auth failed");
-      return;
-    }
-
-    setUser(data.user);
-    setUsername("");
-    setPassword("");
+  async function handleAuthSuccess(authUser: User) {
+    setUser(authUser);
     await loadTodayStatus();
   }
 
@@ -238,18 +213,36 @@ export default function Home() {
           Один spin в день. Весь урон игроков идет в общего босса.
         </p>
 
-        {user ? (
-          <div className="mb-8 flex items-center justify-between rounded-2xl border border-zinc-800 bg-zinc-950/50 p-4">
-            <div>
-              <p className="text-sm text-zinc-400">
-                {user.isGuest ? "Playing as guest" : "Logged in as"}
-              </p>
-              <p className="font-bold">
-                {user.isGuest ? "Guest player" : `@${user.username}`}
-              </p>
-            </div>
+        <div className="mb-8 flex items-center justify-between gap-4 rounded-2xl border border-zinc-800 bg-zinc-950/50 p-4">
+          <div>
+            <p className="text-sm text-zinc-400">
+              {!user
+                ? "Not logged in"
+                : user.isGuest
+                  ? "Playing as guest"
+                  : "Logged in as"}
+            </p>
 
-            {!user.isGuest && (
+            <p className="font-bold">
+              {!user
+                ? "Login to continue"
+                : user.isGuest
+                  ? "Guest player"
+                  : `@${user.username}`}
+            </p>
+          </div>
+
+          <div className="flex gap-2">
+            {(!user || user.isGuest) && (
+              <button
+                onClick={() => setIsAuthModalOpen(true)}
+                className="rounded-xl bg-white px-4 py-2 text-sm font-bold text-zinc-950 hover:bg-zinc-200"
+              >
+                {user?.isGuest ? "Save progress" : "Login"}
+              </button>
+            )}
+
+            {user && !user.isGuest && (
               <button
                 onClick={handleLogout}
                 className="rounded-xl bg-zinc-800 px-4 py-2 text-sm font-bold hover:bg-zinc-700"
@@ -258,74 +251,7 @@ export default function Home() {
               </button>
             )}
           </div>
-        ) : null}
-
-        {(!user || user.isGuest) && (
-          <form
-            onSubmit={handleAuthSubmit}
-            className="mb-8 rounded-2xl border border-zinc-800 bg-zinc-950/50 p-4"
-          >
-            <p className="mb-4 text-sm text-zinc-400">
-              Create an account to save your progress across devices.
-            </p>
-
-            <div className="mb-4 flex gap-2">
-              <button
-                type="button"
-                onClick={() => setAuthMode("login")}
-                className={[
-                  "flex-1 rounded-xl px-4 py-2 font-bold",
-                  authMode === "login"
-                    ? "bg-white text-zinc-950"
-                    : "bg-zinc-800 text-white",
-                ].join(" ")}
-              >
-                Login
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setAuthMode("register")}
-                className={[
-                  "flex-1 rounded-xl px-4 py-2 font-bold",
-                  authMode === "register"
-                    ? "bg-white text-zinc-950"
-                    : "bg-zinc-800 text-white",
-                ].join(" ")}
-              >
-                Register
-              </button>
-            </div>
-
-            <input
-              value={username}
-              onChange={(event) => setUsername(event.target.value)}
-              placeholder="username"
-              className="mb-3 w-full rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-3 outline-none focus:border-zinc-400"
-            />
-
-            <input
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              placeholder="password"
-              type="password"
-              className="mb-3 w-full rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-3 outline-none focus:border-zinc-400"
-            />
-
-            {authError && (
-              <p className="mb-3 rounded-xl bg-red-500/10 p-3 text-sm text-red-300">
-                {authError}
-              </p>
-            )}
-
-            <button
-              type="submit"
-              className="w-full rounded-xl bg-white py-3 font-bold text-zinc-950"
-            >
-              {authMode === "login" ? "Login" : "Create account"}
-            </button>
-          </form>
-        )}
+        </div>
 
         {boss ? (
           <section
@@ -435,6 +361,12 @@ export default function Home() {
           </section>
         )}
       </div>
+
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        onAuthSuccess={handleAuthSuccess}
+      />
     </main>
   );
 }
