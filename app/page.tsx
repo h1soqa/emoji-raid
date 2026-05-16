@@ -298,7 +298,7 @@ export default function Home() {
                 isBossHit ? "animate-boss-shake" : "",
               ].join(" ")}
             >
-              {boss.imageUrl ? (
+              {/* {boss.imageUrl ? (
                 <Image
                   src={boss.imageUrl}
                   alt={boss.name}
@@ -308,10 +308,18 @@ export default function Home() {
                 />
               ) : (
                 <span className="text-7xl">{boss.emoji ?? "👹"}</span>
-              )}
+              )} */}
+              <Image
+                  src="/images/straj_dreva.webp"
+                  alt={boss.name}
+                  width={250}
+                  height={250}
+                  className="h-full w-full object-cover"
+                />
             </div>
 
-            <h2 className="text-2xl font-bold">{boss.name}</h2>
+            {/* <h2 className="text-2xl font-bold">{boss.name}</h2> */}
+            <h2 className="text-2xl font-bold">Страж древа</h2>
 
             <p className="text-zinc-400 mb-4">
               HP: {boss.currentHp} / {boss.maxHp}
