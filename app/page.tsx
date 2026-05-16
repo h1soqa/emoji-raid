@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { AuthModal } from "@/components/AuthModal";
+import Link from "next/link";
 
 type Boss = {
   id: string;
@@ -157,7 +158,7 @@ export default function Home() {
 
       setDamagePopup(data.damage);
       setIsBossHit(true);
-
+    
       window.setTimeout(() => {
         setDamagePopup(null);
       }, 1400);
@@ -212,6 +213,15 @@ export default function Home() {
         <p className="text-zinc-400 mb-8">
           Один spin в день. Весь урон игроков идет в общего босса.
         </p>
+
+        <div className="mb-8 flex gap-2">
+          <Link
+            href="/leaderboard"
+            className="flex-1 rounded-2xl border border-zinc-800 bg-zinc-950/50 px-4 py-3 text-center text-sm font-bold text-zinc-200 hover:bg-zinc-800"
+          >
+            Leaderboard
+          </Link>
+        </div>
 
         <div className="mb-8 flex items-center justify-between gap-4 rounded-2xl border border-zinc-800 bg-zinc-950/50 p-4">
           <div>
