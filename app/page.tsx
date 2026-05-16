@@ -315,6 +315,7 @@ export default function Home() {
                   width={250}
                   height={250}
                   className="object-cover"
+                  loading="eager"
                 />
             </div>
 
