@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getOrCreateTodayBoss, getTodayKey } from "@/lib/boss";
 import { calculateDamage, spinSlot } from "@/lib/slot";
 import { getCurrentUser } from "@/lib/auth";
+import { calculateCastleHp, getComputedBossStatus } from "@/lib/castle";
 
 export async function POST() {
   const user = await getCurrentUser();
@@ -16,6 +17,20 @@ export async function POST() {
 
   const date = getTodayKey();
   const boss = await getOrCreateTodayBoss();
+
+  const bossStatus = getComputedBossStatus(boss);
+
+  if (bossStatus !== "active") {
+    return NextResponse.json(
+      {
+        error:
+          bossStatus === "won"
+            ? "Boss is already defeated"
+            : "The castle has fallen",
+      },
+      { status: 409 }
+    );
+  }
 
   const existingSpin = await prisma.spin.findUnique({
     where: {
@@ -60,6 +75,10 @@ export async function POST() {
     symbols,
     damage,
     spin,
-    boss: updatedBoss,
+    boss: {
+      ...updatedBoss,
+      castleCurrentHp: calculateCastleHp(updatedBoss),
+      computedStatus: getComputedBossStatus(updatedBoss),
+    },
   });
 }

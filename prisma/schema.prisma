@@ -23,15 +23,22 @@ model User {
 }
 
 model Boss {
-  id        String   @id @default(cuid())
-  date      String   @unique
-  name      String
-  emoji     String
-  maxHp     Int
-  currentHp Int
-  createdAt DateTime @default(now())
+  id                 String   @id @default(cuid())
+  date               String   @unique
+  name               String
+  emoji              String?
+  imageUrl           String?
+  maxHp              Int
+  currentHp          Int
 
-  spins     Spin[]
+  castleMaxHp        Int      @default(1440)
+  castleDamagePerMin Int      @default(1)
+  castleImageUrl     String?
+
+  status             String   @default("active")
+  createdAt          DateTime @default(now())
+
+  spins              Spin[]
 }
 
 model Spin {

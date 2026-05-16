@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getOrCreateTodayBoss, getTodayKey } from "@/lib/boss";
 import { getCurrentUser } from "@/lib/auth";
+import { calculateCastleHp, getComputedBossStatus } from "@/lib/castle";
 
 export async function GET() {
   const user = await getCurrentUser();
@@ -12,7 +13,11 @@ export async function GET() {
       user: null,
       canSpin: false,
       spin: null,
-      boss,
+      boss: {
+        ...boss,
+        castleCurrentHp: calculateCastleHp(boss),
+        computedStatus: getComputedBossStatus(boss),
+      },
     });
   }
 
@@ -29,8 +34,12 @@ export async function GET() {
 
   return NextResponse.json({
     user,
-    canSpin: !spin,
+    canSpin: !spin && getComputedBossStatus(boss) === "active",
     spin,
-    boss,
+    boss: {
+      ...boss,
+      castleCurrentHp: calculateCastleHp(boss),
+      computedStatus: getComputedBossStatus(boss),
+    },
   });
 }

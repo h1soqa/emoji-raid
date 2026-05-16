@@ -1,0 +1,7 @@
+-- AlterTable
+ALTER TABLE "Boss" ADD COLUMN     "castleDamagePerMin" INTEGER NOT NULL DEFAULT 1,
+ADD COLUMN     "castleImageUrl" TEXT,
+ADD COLUMN     "castleMaxHp" INTEGER NOT NULL DEFAULT 1440,
+ADD COLUMN     "imageUrl" TEXT,
+ADD COLUMN     "status" TEXT NOT NULL DEFAULT 'active',
+ALTER COLUMN "emoji" DROP NOT NULL;

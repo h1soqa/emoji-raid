@@ -3,14 +3,23 @@
 import { useEffect, useState } from "react";
 import { AuthModal } from "@/components/AuthModal";
 import Link from "next/link";
+import Image from "next/image";
 
 type Boss = {
   id: string;
   name: string;
-  emoji: string;
+  emoji: string | null;
+  imageUrl: string | null;
   maxHp: number;
   currentHp: number;
   date: string;
+
+  castleMaxHp: number;
+  castleDamagePerMin: number;
+  castleCurrentHp: number;
+  castleImageUrl: string | null;
+
+  computedStatus: "active" | "won" | "lost";
 };
 
 type SpinResult = {
@@ -263,6 +272,16 @@ export default function Home() {
           </div>
         </div>
 
+        {boss && boss.computedStatus !== "active" && (
+          <div className="mb-8 rounded-2xl border border-zinc-800 bg-zinc-950/50 p-4 text-center">
+            <p className="text-xl font-black">
+              {boss.computedStatus === "won"
+                ? "Victory! Boss defeated."
+                : "Defeat. The castle has fallen."}
+            </p>
+          </div>
+        )}
+
         {boss ? (
           <section
             className={[
@@ -279,10 +298,20 @@ export default function Home() {
                 isBossHit ? "animate-boss-shake" : "",
               ].join(" ")}
             >
-              <img src="/straj_dreva.webp" width="250px"/>
+              {boss.imageUrl ? (
+                <Image
+                  src={boss.imageUrl}
+                  alt={boss.name}
+                  width={250}
+                  height={250}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <span className="text-7xl">{boss.emoji ?? "👹"}</span>
+              )}
             </div>
 
-            <h2 className="text-2xl font-bold">Страж древа</h2>
+            <h2 className="text-2xl font-bold">{boss.name}</h2>
 
             <p className="text-zinc-400 mb-4">
               HP: {boss.currentHp} / {boss.maxHp}
@@ -307,6 +336,48 @@ export default function Home() {
           <p>Loading boss...</p>
         )}
 
+        {boss ? (
+          <section className="mb-8 rounded-3xl border border-zinc-800 bg-zinc-950/40 p-6 text-center">
+            <div className="mx-auto mb-4 flex h-28 w-28 items-center justify-center overflow-hidden rounded-3xl bg-zinc-900">
+              {boss.castleImageUrl ? (
+                <Image
+                  src={boss.castleImageUrl}
+                  alt="Castle"
+                  width={250}
+                  height={250}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <span className="text-6xl">🏰</span>
+              )}
+            </div>
+
+            <h2 className="text-2xl font-bold">Castle</h2>
+
+            <p className="mb-4 text-zinc-400">
+              HP: {boss.castleCurrentHp} / {boss.castleMaxHp}
+            </p>
+
+            <div className="h-4 w-full overflow-hidden rounded-full bg-zinc-800">
+              <div
+                className="h-full bg-blue-500 transition-all duration-700"
+                style={{
+                  width: `${Math.max(
+                    0,
+                    Math.round((boss.castleCurrentHp / boss.castleMaxHp) * 100)
+                  )}%`,
+                }}
+              />
+            </div>
+
+            <p className="mt-3 text-sm text-zinc-500">
+              The boss deals {boss.castleDamagePerMin} damage per minute.
+            </p>
+          </section>
+        ) : (
+          <p>Loading castle...</p>
+        )}
+
         <section className="mb-8 grid grid-cols-3 gap-4">
           {displayedSymbols.map((symbol, index) => (
             <div
@@ -325,16 +396,26 @@ export default function Home() {
 
         <button
           onClick={handleSpin}
-          disabled={isSpinning || !boss || !canSpin || !user}
+          disabled={
+            isSpinning ||
+            !boss ||
+            !canSpin ||
+            !user ||
+            boss.computedStatus !== "active"
+          }
           className="w-full rounded-2xl bg-white text-zinc-950 font-bold py-4 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] transition"
         >
           {isSpinning
             ? "Spinning..."
             : !user
               ? "Login to spin"
-              : canSpin
-                ? "Spin"
-                : "Already played today"}
+              : boss?.computedStatus === "won"
+                ? "Boss defeated"
+                : boss?.computedStatus === "lost"
+                  ? "Castle fallen"
+                  : canSpin
+                    ? "Spin"
+                    : "Already played today"}
         </button>
 
         {todaySpin && !result && (
