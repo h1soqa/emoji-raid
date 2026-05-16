@@ -401,75 +401,86 @@ export default function Home() {
               <p>Loading castle...</p>
             )}
           </div>
+          
           <section className="rounded-3xl border border-zinc-800 bg-zinc-950/40 p-5">
-            <div className="mb-8 grid grid-cols-3 gap-4">
-              {displayedSymbols.map((symbol, index) => (
-                <div
-                  key={index}
-                  className={[
-                    "aspect-[1.3] rounded-2xl bg-zinc-800 border border-zinc-700 flex items-center justify-center text-7xl shadow-inner",
-                    "transition-transform duration-100",
-                    isSpinning ? "scale-102 animate-pulse" : "scale-100",
-                  ].join(" ")}
-                >
-                  {symbol}
-                </div>
-              ))}
-            </div>
-            <button
-              onClick={handleSpin}
-              disabled={
-                isSpinning ||
-                !boss ||
-                !canSpin ||
-                !user ||
-                boss.computedStatus !== "active"
-              }
-              className="w-full rounded-2xl bg-white text-zinc-950 font-bold py-4 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] transition"
-            >
-              {isSpinning
-                ? "Spinning..."
-                : !user
-                  ? "Login to spin"
-                  : boss?.computedStatus === "won"
-                    ? "Boss defeated"
-                    : boss?.computedStatus === "lost"
-                      ? "Castle fallen"
-                      : canSpin
-                        ? "Spin"
-                        : "Already played today"}
-            </button>
-          </section>
-
-          {todaySpin && !result && (
-            <section className="mt-8 rounded-2xl bg-zinc-800 p-6 text-center">
-              <p className="text-zinc-400 mb-2">Today&apos;s attack</p>
-
-              <div className="text-5xl mb-4 tracking-widest">
-                {todaySpin.symbols.split(",").join(" ")}
+            <div className="flex flex-col gap-4 md:flex-row md:items-stretch">
+              <div className="grid flex-1 grid-cols-3 gap-3">
+                {displayedSymbols.map((symbol, index) => (
+                  <div
+                    key={index}
+                    className={[
+                      "aspect-square rounded-3xl bg-zinc-800 border border-zinc-700",
+                      "flex items-center justify-center text-6xl shadow-inner",
+                      "transition-transform duration-100",
+                      isSpinning ? "scale-102 animate-pulse" : "scale-100",
+                    ].join(" ")}
+                  >
+                    {symbol}
+                  </div>
+                ))}
               </div>
 
-              <p className="text-2xl font-bold">
-                Damage: {todaySpin.damage}
+              <button
+                onClick={handleSpin}
+                disabled={
+                  isSpinning ||
+                  !boss ||
+                  !canSpin ||
+                  !user ||
+                  boss.computedStatus !== "active"
+                }
+                className="rounded-2xl bg-white px-8 py-4 font-black text-zinc-950 transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 md:w-60"
+              >
+                {isSpinning
+                  ? "Spinning..."
+                  : !user
+                    ? "Login to spin"
+                    : boss?.computedStatus === "won"
+                      ? "Boss defeated"
+                      : boss?.computedStatus === "lost"
+                        ? "Castle fallen"
+                        : canSpin
+                          ? "Spin"
+                          : "Already played today"}
+              </button>
+            </div>
+
+            {error && (
+              <p className="mt-4 rounded-xl bg-red-500/10 p-4 text-red-300">
+                {error}
               </p>
-            </section>
-          )}
+            )}
 
-          {error && (
-            <p className="mt-4 rounded-xl bg-red-500/10 text-red-300 p-4">
-              {error}
-            </p>
-          )}
+            {result && (
+              <div className="mt-4 flex items-center justify-between rounded-2xl bg-zinc-800 px-4 py-3">
+                <div className="text-3xl tracking-widest">
+                  {result.symbols.join(" ")}
+                </div>
 
-          {result && (
-            <div className="mt-4 flex items-center justify-between rounded-2xl bg-zinc-800 px-4 py-3">
-              <div className="text-3xl">{result.symbols.join(" ")}</div>
-              <div className="text-right">
-                <p className="text-xs text-zinc-400">Damage</p>
-                <p className="text-xl font-black text-red-300">{result.damage}</p>
+                <div className="text-right">
+                  <p className="text-xs text-zinc-400">Damage</p>
+                  <p className="text-xl font-black text-red-300">
+                    {result.damage}
+                  </p>
+                </div>
               </div>
-            </div>
-          )}
+            )}
+
+            {todaySpin && !result && (
+              <div className="mt-4 flex items-center justify-between rounded-2xl bg-zinc-800 px-4 py-3">
+                <div className="text-3xl tracking-widest">
+                  {todaySpin.symbols.split(",").join(" ")}
+                </div>
+
+                <div className="text-right">
+                  <p className="text-xs text-zinc-400">Today&apos;s damage</p>
+                  <p className="text-xl font-black text-red-300">
+                    {todaySpin.damage}
+                  </p>
+                </div>
+              </div>
+            )}
+          </section>
         </section>
       </div>
 
